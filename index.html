@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .pc {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .celular {
+            display: none;
+        }
+
+        /* SOLO CELULARES */
+        @media (max-width: 745px) {
+            .pc {
+                display: none;
+            }
+
+            .celular {
+                display: block;
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <img src="pagina.png" class="pc">
+    <img src="1.png" class="celular">
+</body>
+</html>
