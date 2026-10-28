@@ -1,0 +1,92 @@
+const scriptTag = document.currentScript;
+const BASE_URL = scriptTag.dataset.baseUrl;
+const DETAIL_URL = scriptTag.dataset.detailUrl;
+const DOWNLOAD_URL = scriptTag.dataset.downloadUrl;
+
+window.history.replaceState({}, document.title, BASE_URL);
+
+document.addEventListener('click', function (e) {
+  const link = e.target.closest('[data-action="find-document"]');
+  if (link) {
+    e.preventDefault();
+    findDocumentInfo(link.dataset.code, link.dataset.folio);
+  }
+});
+
+document.getElementById('id_documentInfo').addEventListener('click', function (e) {
+  const btn = e.target.closest('[data-action="download"]');
+  if (btn) {
+    downloadDocument(btn.dataset.folio, btn.dataset.code);
+  }
+});
+
+window.onload = function () {
+  const $documentInfo = document.getElementById('id_documentInfo');
+  const code = $documentInfo.dataset.code;
+  const folio = $documentInfo.dataset.folio;
+
+  if (code && folio) {
+    findDocumentInfo(code, folio);
+  }
+
+  if ($documentInfo.dataset.showSessionAlert === 'true') {
+    alert('No olvides cerrar sesión al salir de la página');
+  }
+};
+
+async function findDocumentInfo(code, folio) {
+  const $documentInfo = document.getElementById('id_documentInfo');
+  const loaderImg = $documentInfo.dataset.loaderImg;
+  const csrfToken = $documentInfo.dataset.csrfToken;
+
+  $documentInfo.innerHTML = `<div class="loader"><img src="${loaderImg}"></div>`;
+
+  const data = {
+    'codigo': code,
+    'folio': folio
+  };
+
+  await fetch(DETAIL_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken,
+    },
+    body: JSON.stringify(data)
+  }).then((response) => {
+    if (response.status == 500) {
+      throw new Error("Bad response from server");
+    }
+    return response;
+  }).then(async (response) => {
+    let result = await response.text();
+    $documentInfo.innerHTML = result;
+  }).catch((error) => {
+    $documentInfo.innerHTML = error;
+  });
+}
+
+async function downloadDocument(folio, code) {
+  try {
+    const response = await fetch(`${DOWNLOAD_URL}?folio=${folio}&codigo=${code}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await response.json();
+
+    if (data.url) {
+      window.open(data.url, '_blank');
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Documento no disponible',
+        text: data.error || 'Tu documento se encuentra en proceso de validación.',
+      });
+    }
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Ocurrió un error al intentar descargar el documento.',
+    });
+  }
+}
